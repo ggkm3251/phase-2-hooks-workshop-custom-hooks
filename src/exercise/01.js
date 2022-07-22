@@ -14,7 +14,7 @@ export default function Home() {
    then, call the useDocumentTitle hook in your component
   */
  
-  useDocumentTitle('testing');
+  useDocumentTitle("Welcome to the home page!");
 
   return (
     <div>
