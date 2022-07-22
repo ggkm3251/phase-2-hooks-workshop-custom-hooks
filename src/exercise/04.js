@@ -5,7 +5,21 @@ import { useEffect, useState } from "react";
   - key: the key on localStorage where we are saving this data
   - initialValue: the initial value of state
 */
-export function useLocalStorage(key, initialValue) {
+
+function getLocalStorageValue(key) {
+  const storedValue = localStorage.getItem(key);
+  try {
+    return JSON.parse(storedValue);
+  } catch {}
+  return storedValue;
+}
+
+function setLocalStorageValue(key, value) {
+  const valueToStore = JSON.stringify(value);
+  localStorage.setItem(key, valueToStore);
+}
+
+export function useLocalStorage(key, initialValue = null) {
   /* 
     ✅ in this hook, use the useState hook. For the initial value for state:
     use the value saved in localStorage OR the initialValue from the function parameters 
@@ -16,25 +30,47 @@ export function useLocalStorage(key, initialValue) {
    in the useEffect, when state is updated, save the state to localStorage
    don't forget the dependencies array!
   */
-  useEffect(() => {});
 
   /* 
    ✅ return the same interface as useState:
    an array with state and a setState function
   */
   // 👀 return [state, setState]
+
+  const storedValue = getLocalStorageValue(key);
+  const [state, setState] = useState(storedValue || initialValue);
+
+  useEffect(() => {
+    setLocalStorageValue(key, state);
+  }, [key, state]);
+
+  useEffect(() => {
+    function handleChange() {
+      const newValue = getLocalStorageValue(key);
+      setState(newValue);
+    }
+
+    window.addEventListener("storage", handleChange);
+
+    return function cleanup() {
+      window.removeEventListener("storage", handleChange);
+    };
+  }, [key]);
+
+  return [state, setState];
 }
+
+
 
 function Form() {
   // ✅ after implementing the useLocalStorage hook, replace useState with useLocalStorage
   // don't forget to pass in both arguments (a key and an initialValue)
-  const [name, setName] = useState("");
-  console.log(name);
+  const [name, setName] = useLocalStorage("_solution_3_username", "");
 
   return (
     <form style={{ display: "flex", flexDirection: "column" }}>
       <label htmlFor="name">Name:</label>
-      <input type="text" value={name} onChange={e => setName(e.target.value)} />
+      <input value={name} onChange={e => setName(e.target.value)} />
       <h4>{name ? `Welcome, ${name}!` : "Enter your name"}</h4>
     </form>
   );
@@ -42,7 +78,7 @@ function Form() {
 
 function FormWithObject() {
   // 🤓 save me for the bonus! when you're ready, update this useState to use your useLocalStorage hook instead
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useLocalStorage("_solution_3_blog_post", {
     title: "",
     content: "",
   });
